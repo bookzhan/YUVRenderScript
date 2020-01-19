@@ -27,7 +27,7 @@ public class CameraActivity extends AppCompatActivity {
         bz_camera_view = findViewById(R.id.bz_camera_view);
         bz_camera_view.setNeedCallBackData(true);
         bz_camera_view.setPreviewTargetSize(480, 640);
-        bz_camera_view.setPreviewFormat(ImageFormat.YV12);
+        bz_camera_view.setPreviewFormat(ImageFormat.NV21);
         bz_camera_view.setCameraStateListener(new CameraStateListener() {
             @Override
             public void onPreviewSuccess(Camera camera, int width, int height) {
@@ -40,7 +40,8 @@ public class CameraActivity extends AppCompatActivity {
 
             @Override
             public void onPreviewDataUpdate(byte[] data, int width, int height, int displayOrientation, int cameraId) {
-                final Bitmap bitmap = yuvConvertUtil.yuv_yv12_2_rgba(data, width, height, displayOrientation, true);
+//                final Bitmap bitmap = yuvConvertUtil.yuv_yv12_2_Bitmap(data, width, height, displayOrientation, true);
+                final Bitmap bitmap = yuvConvertUtil.yuv_nv21_2_Bitmap(data, width, height, displayOrientation, true);
                 image_view.post(new Runnable() {
                     @Override
                     public void run() {

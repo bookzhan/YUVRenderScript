@@ -187,25 +187,6 @@ uchar4 __attribute__((kernel)) yuv_420_888_2_bgra(uint32_t x, uint32_t y) {
     return (uchar4){rgba.z, rgba.y, rgba.x,rgba.w};
 }
 
-uchar4 __attribute__((kernel)) yuv_nv_21_2_rgba(uint32_t x, uint32_t y) {
-    if(inWidth<=0||inHeight<=0){
-        rsDebug("bz_inWidth<=0||inHeight<=0", inWidth,inHeight);
-        return '0';
-    }
-    int targetX=x;
-    int targetY=y;
-    setLocation(x,y,&targetX,&targetY);
-    uint yIndex=targetX*targetY;
-    uint uIndex=inWidth*inHeight+ (targetX/2) *(targetY/2);
-    uint vIndex=inWidth*inHeight+ (targetX/2) *(targetY/2)+1;
-    uchar yps= rsGetElementAt_uchar(mInNV21,yIndex);
-    uchar u= rsGetElementAt_uchar(mInNV21,uIndex);
-    uchar v= rsGetElementAt_uchar(mInNV21,vIndex);
-
-    return yuvToRGBA4(yps, u, v);
-}
-
-
 uchar4 __attribute__((kernel)) yuv_yv12_2_rgba(uint32_t x, uint32_t y) {
     if(inWidth<=0||inHeight<=0){
         rsDebug("bz_inWidth<=0||inHeight<=0", inWidth,inHeight);
@@ -217,9 +198,9 @@ uchar4 __attribute__((kernel)) yuv_yv12_2_rgba(uint32_t x, uint32_t y) {
     uint yIndex=targetX+inWidth*targetY;
     uint uIndex=inWidth*inHeight+ (targetX/2) + inWidth/2*(targetY/2);
     uint vIndex=inWidth*inHeight+inWidth*inHeight/4+ (targetX/2) + inWidth/2*(targetY/2);
-    uchar yps= rsGetElementAt_uchar(mInNV21,yIndex);
-    uchar u= rsGetElementAt_uchar(mInNV21,uIndex);
-    uchar v= rsGetElementAt_uchar(mInNV21,vIndex);
+    uchar yps= rsGetElementAt_uchar(mInYV12,yIndex);
+    uchar u= rsGetElementAt_uchar(mInYV12,uIndex);
+    uchar v= rsGetElementAt_uchar(mInYV12,vIndex);
 
     return yuvToRGBA4(yps, v, u);
 }
@@ -235,6 +216,43 @@ uchar4 __attribute__((kernel)) yuv_yv12_2_bgra(uint32_t x, uint32_t y) {
     uint yIndex=targetX+inWidth*targetY;
     uint uIndex=inWidth*inHeight+ (targetX/2) + inWidth/2*(targetY/2);
     uint vIndex=inWidth*inHeight+inWidth*inHeight/4+ (targetX/2) + inWidth/2*(targetY/2);
+    uchar yps= rsGetElementAt_uchar(mInYV12,yIndex);
+    uchar u= rsGetElementAt_uchar(mInYV12,uIndex);
+    uchar v= rsGetElementAt_uchar(mInYV12,vIndex);
+
+    uchar4 rgba= yuvToRGBA4(yps, v, u);
+    return (uchar4){rgba.z, rgba.y, rgba.x,rgba.w};
+}
+
+uchar4 __attribute__((kernel)) yuv_nv21_2_rgba(uint32_t x, uint32_t y) {
+    if(inWidth<=0||inHeight<=0){
+        rsDebug("bz_inWidth<=0||inHeight<=0", inWidth,inHeight);
+        return '0';
+    }
+    int targetX=x;
+    int targetY=y;
+    setLocation(x,y,&targetX,&targetY);
+    uint yIndex=targetX+inWidth*targetY;
+    uint uIndex=inWidth*inHeight+ 2*(targetX/2) + inWidth*(targetY/2);
+    uint vIndex=inWidth*inHeight+ 2*(targetX/2) + inWidth*(targetY/2)+1;
+    uchar yps= rsGetElementAt_uchar(mInNV21,yIndex);
+    uchar u= rsGetElementAt_uchar(mInNV21,uIndex);
+    uchar v= rsGetElementAt_uchar(mInNV21,vIndex);
+
+    return yuvToRGBA4(yps, v, u);
+}
+
+uchar4 __attribute__((kernel)) yuv_nv21_2_bgra(uint32_t x, uint32_t y) {
+    if(inWidth<=0||inHeight<=0){
+        rsDebug("bz_inWidth<=0||inHeight<=0", inWidth,inHeight);
+        return '0';
+    }
+    int targetX=x;
+    int targetY=y;
+    setLocation(x,y,&targetX,&targetY);
+    uint yIndex=targetX+inWidth*targetY;
+    uint uIndex=inWidth*inHeight+ 2*(targetX/2) + inWidth*(targetY/2);
+    uint vIndex=inWidth*inHeight+ 2*(targetX/2) + inWidth*(targetY/2)+1;
     uchar yps= rsGetElementAt_uchar(mInNV21,yIndex);
     uchar u= rsGetElementAt_uchar(mInNV21,uIndex);
     uchar v= rsGetElementAt_uchar(mInNV21,vIndex);

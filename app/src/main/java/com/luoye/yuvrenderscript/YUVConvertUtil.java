@@ -25,16 +25,17 @@ public class YUVConvertUtil {
     private Allocation uIn;
     private Allocation vIn;
     private Allocation yv12In;
-    private Allocation rgbaOut, bgraOut;
+    private Allocation nv21In;
+    private Allocation finalOut;
     private Bitmap bitmap;
-    private byte[] rgbaBuffer, bgraBuffer;
+    private byte[] outBuffer;
 
     public YUVConvertUtil(Context context) {
         renderScript = RenderScript.create(context);
         scriptC_yuv = new ScriptC_bz_yuv_util(renderScript);
     }
 
-    public Bitmap yuv_yv12_2_rgba(byte[] yv12Data, int width, int height, int orientation, boolean flipY) {
+    public Bitmap yuv_yv12_2_Bitmap(byte[] yv12Data, int width, int height, int orientation, boolean flipY) {
         int finalWidth = width;
         int finalHeight = height;
         if (orientation == 90 || orientation == 270) {
@@ -45,10 +46,71 @@ public class YUVConvertUtil {
         if (null == bitmap) {
             bitmap = Bitmap.createBitmap(finalWidth, finalHeight, Bitmap.Config.ARGB_8888);
         }
-        if (null != rgbaOut) {
-            rgbaOut.copyTo(bitmap);
+        if (null != finalOut) {
+            finalOut.copyTo(bitmap);
         }
         return bitmap;
+    }
+
+    public byte[] yuv_yv12_2_RGBA(byte[] yv12Data, int width, int height, int orientation, boolean flipY) {
+        convertYV12(yv12Data, width, height, orientation, flipY, RGBA);
+        if (null == outBuffer) {
+            outBuffer = new byte[width * height * 4];
+        }
+        if (null != finalOut) {
+            finalOut.copyTo(outBuffer);
+        }
+        return outBuffer;
+    }
+
+    public byte[] yuv_yv12_2_BGRA(byte[] yv12Data, int width, int height, int orientation, boolean flipY) {
+        convertYV12(yv12Data, width, height, orientation, flipY, BGRA);
+        if (null == outBuffer) {
+            outBuffer = new byte[width * height * 4];
+        }
+        if (null != finalOut) {
+            finalOut.copyTo(outBuffer);
+        }
+        return outBuffer;
+    }
+
+    public Bitmap yuv_nv21_2_Bitmap(byte[] nv21Data, int width, int height, int orientation, boolean flipY) {
+        int finalWidth = width;
+        int finalHeight = height;
+        if (orientation == 90 || orientation == 270) {
+            finalWidth = height;
+            finalHeight = width;
+        }
+        convertNV21(nv21Data, width, height, orientation, flipY, RGBA);
+        if (null == bitmap) {
+            bitmap = Bitmap.createBitmap(finalWidth, finalHeight, Bitmap.Config.ARGB_8888);
+        }
+        if (null != finalOut) {
+            finalOut.copyTo(bitmap);
+        }
+        return bitmap;
+    }
+
+    public byte[] yuv_nv21_2_RGBA(byte[] yv12Data, int width, int height, int orientation, boolean flipY) {
+        convertNV21(yv12Data, width, height, orientation, flipY, RGBA);
+        if (null == outBuffer) {
+            outBuffer = new byte[width * height * 4];
+        }
+        if (null != finalOut) {
+            finalOut.copyTo(outBuffer);
+        }
+        return outBuffer;
+    }
+
+    public byte[] yuv_nv21_2_BGRA(byte[] yv12Data, int width, int height, int orientation, boolean flipY) {
+        convertNV21(yv12Data, width, height, orientation, flipY, BGRA);
+        if (null == outBuffer) {
+            outBuffer = new byte[width * height * 4];
+        }
+        if (null != finalOut) {
+            finalOut.copyTo(outBuffer);
+        }
+        return outBuffer;
     }
 
     public Bitmap yuv420_2_Bitmap(byte[] yData, byte[] uData, byte[] vData, int uvPixelStride, int width, int height, int orientation, boolean flipY) {
@@ -62,32 +124,32 @@ public class YUVConvertUtil {
         if (null == bitmap) {
             bitmap = Bitmap.createBitmap(finalWidth, finalHeight, Bitmap.Config.ARGB_8888);
         }
-        if (null != rgbaOut) {
-            rgbaOut.copyTo(bitmap);
+        if (null != finalOut) {
+            finalOut.copyTo(bitmap);
         }
         return bitmap;
     }
 
     public byte[] yuv420_2_RGBA(byte[] yData, byte[] uData, byte[] vData, int uvPixelStride, int width, int height, int orientation, boolean flipY) {
         convertYuv420(yData, uData, vData, uvPixelStride, width, height, orientation, flipY, RGBA);
-        if (null == rgbaBuffer) {
-            rgbaBuffer = new byte[width * height * 4];
+        if (null == outBuffer) {
+            outBuffer = new byte[width * height * 4];
         }
-        if (null != rgbaOut) {
-            rgbaOut.copyTo(rgbaBuffer);
+        if (null != finalOut) {
+            finalOut.copyTo(outBuffer);
         }
-        return rgbaBuffer;
+        return outBuffer;
     }
 
     public byte[] yuv420_2_BGRA(byte[] yData, byte[] uData, byte[] vData, int uvPixelStride, int width, int height, int orientation, boolean flipY) {
         convertYuv420(yData, uData, vData, uvPixelStride, width, height, orientation, flipY, BGRA);
-        if (null == bgraBuffer) {
-            bgraBuffer = new byte[width * height * 4];
+        if (null == outBuffer) {
+            outBuffer = new byte[width * height * 4];
         }
-        if (null != bgraOut) {
-            bgraOut.copyTo(bgraBuffer);
+        if (null != finalOut) {
+            finalOut.copyTo(outBuffer);
         }
-        return bgraBuffer;
+        return outBuffer;
     }
 
     private void convertYV12(byte[] yv12Data, int width, int height, int orientation, boolean flipY, int format) {
@@ -103,25 +165,49 @@ public class YUVConvertUtil {
         if (yv12In == null) {
             Type.Builder yType = new Type.Builder(renderScript, Element.U8(renderScript)).setX(width * height * 3 / 2);
             yv12In = Allocation.createTyped(renderScript, yType.create(), Allocation.USAGE_SCRIPT);
-            if (format == BGRA) {
-//                Type.Builder outType = new Type.Builder(renderScript, Element.RGB_888(renderScript)).setX(finalWidth).setY(finalHeight);
-                Type.Builder outType = new Type.Builder(renderScript, Element.RGBA_8888(renderScript)).setX(finalWidth).setY(finalHeight);
-                bgraOut = Allocation.createTyped(renderScript, outType.create(), Allocation.USAGE_SCRIPT);
-            } else {
-                Type.Builder outType = new Type.Builder(renderScript, Element.RGBA_8888(renderScript)).setX(finalWidth).setY(finalHeight);
-                rgbaOut = Allocation.createTyped(renderScript, outType.create(), Allocation.USAGE_SCRIPT);
-            }
+
+            Type.Builder outType = new Type.Builder(renderScript, Element.RGBA_8888(renderScript)).setX(finalWidth).setY(finalHeight);
+            finalOut = Allocation.createTyped(renderScript, outType.create(), Allocation.USAGE_SCRIPT);
         }
         yv12In.copyFrom(yv12Data);
-        scriptC_yuv.set_mInNV21(yv12In);
+        scriptC_yuv.set_mInYV12(yv12In);
         scriptC_yuv.set_inWidth(width);
         scriptC_yuv.set_inHeight(height);
         scriptC_yuv.set_orientation(orientation);
         scriptC_yuv.set_flipY(flipY);
         if (format == BGRA) {
-            scriptC_yuv.forEach_yuv_yv12_2_bgra(bgraOut);
+            scriptC_yuv.forEach_yuv_yv12_2_bgra(finalOut);
         } else {
-            scriptC_yuv.forEach_yuv_yv12_2_rgba(rgbaOut);
+            scriptC_yuv.forEach_yuv_yv12_2_rgba(finalOut);
+        }
+    }
+
+    private void convertNV21(byte[] nv21Data, int width, int height, int orientation, boolean flipY, int format) {
+        if (null == nv21Data || width <= 0 || height <= 0) {
+            return;
+        }
+        int finalWidth = width;
+        int finalHeight = height;
+        if (orientation == 90 || orientation == 270) {
+            finalWidth = height;
+            finalHeight = width;
+        }
+        if (nv21In == null) {
+            Type.Builder yType = new Type.Builder(renderScript, Element.U8(renderScript)).setX(width * height * 3 / 2);
+            nv21In = Allocation.createTyped(renderScript, yType.create(), Allocation.USAGE_SCRIPT);
+            Type.Builder outType = new Type.Builder(renderScript, Element.RGBA_8888(renderScript)).setX(finalWidth).setY(finalHeight);
+            finalOut = Allocation.createTyped(renderScript, outType.create(), Allocation.USAGE_SCRIPT);
+        }
+        nv21In.copyFrom(nv21Data);
+        scriptC_yuv.set_mInNV21(nv21In);
+        scriptC_yuv.set_inWidth(width);
+        scriptC_yuv.set_inHeight(height);
+        scriptC_yuv.set_orientation(orientation);
+        scriptC_yuv.set_flipY(flipY);
+        if (format == BGRA) {
+            scriptC_yuv.forEach_yuv_nv21_2_bgra(finalOut);
+        } else {
+            scriptC_yuv.forEach_yuv_nv21_2_rgba(finalOut);
         }
     }
 
@@ -144,14 +230,8 @@ public class YUVConvertUtil {
             uIn = Allocation.createTyped(renderScript, uvType.create(), Allocation.USAGE_SCRIPT);
             vIn = Allocation.createTyped(renderScript, uvType.create(), Allocation.USAGE_SCRIPT);
 
-            if (format == BGRA) {
-//                Type.Builder outType = new Type.Builder(renderScript, Element.RGB_888(renderScript)).setX(finalWidth).setY(finalHeight);
-                Type.Builder outType = new Type.Builder(renderScript, Element.RGBA_8888(renderScript)).setX(finalWidth).setY(finalHeight);
-                bgraOut = Allocation.createTyped(renderScript, outType.create(), Allocation.USAGE_SCRIPT);
-            } else {
-                Type.Builder outType = new Type.Builder(renderScript, Element.RGBA_8888(renderScript)).setX(finalWidth).setY(finalHeight);
-                rgbaOut = Allocation.createTyped(renderScript, outType.create(), Allocation.USAGE_SCRIPT);
-            }
+            Type.Builder outType = new Type.Builder(renderScript, Element.RGBA_8888(renderScript)).setX(finalWidth).setY(finalHeight);
+            finalOut = Allocation.createTyped(renderScript, outType.create(), Allocation.USAGE_SCRIPT);
         }
 
         yIn.copyFrom(yData);
@@ -167,9 +247,9 @@ public class YUVConvertUtil {
         scriptC_yuv.set_uvPixelStride(uvPixelStride);
 
         if (format == BGRA) {
-            scriptC_yuv.forEach_yuv_420_888_2_bgra(bgraOut);
+            scriptC_yuv.forEach_yuv_420_888_2_bgra(finalOut);
         } else {
-            scriptC_yuv.forEach_yuv_420_888_2_rgba(rgbaOut);
+            scriptC_yuv.forEach_yuv_420_888_2_rgba(finalOut);
         }
     }
 }
