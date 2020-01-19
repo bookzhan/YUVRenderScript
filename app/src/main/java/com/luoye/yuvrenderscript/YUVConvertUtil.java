@@ -13,7 +13,7 @@ import com.luoye.bzyuv.ScriptC_bz_yuv_util;
  * Created by zhandalin on 2020-01-15 14:00.
  * description:
  */
-public class YUV420pUtil {
+public class YUVConvertUtil {
     private static final String TAG = "bz_YUV420pUtil";
     private static final int RGBA = 0;
     private static final int BGRA = 1;
@@ -27,12 +27,12 @@ public class YUV420pUtil {
     private Bitmap bitmap;
     private byte[] rgbaBuffer, bgraBuffer;
 
-    public YUV420pUtil(Context context) {
+    public YUVConvertUtil(Context context) {
         renderScript = RenderScript.create(context);
         scriptC_yuv = new ScriptC_bz_yuv_util(renderScript);
     }
 
-    public Bitmap yuv2Bitmap(byte[] yData, byte[] uData, byte[] vData, int uvPixelStride, int width, int height, int orientation, boolean flipY) {
+    public Bitmap yuv420_2_Bitmap(byte[] yData, byte[] uData, byte[] vData, int uvPixelStride, int width, int height, int orientation, boolean flipY) {
         int finalWidth = width;
         int finalHeight = height;
         if (orientation == 90 || orientation == 270) {
@@ -49,7 +49,7 @@ public class YUV420pUtil {
         return bitmap;
     }
 
-    public byte[] yuv2RGBA(byte[] yData, byte[] uData, byte[] vData, int uvPixelStride, int width, int height, int orientation, boolean flipY) {
+    public byte[] yuv420_2_RGBA(byte[] yData, byte[] uData, byte[] vData, int uvPixelStride, int width, int height, int orientation, boolean flipY) {
         convert(yData, uData, vData, uvPixelStride, width, height, orientation, flipY, RGBA);
         if (null == rgbaBuffer) {
             rgbaBuffer = new byte[width * height * 4];
@@ -60,7 +60,7 @@ public class YUV420pUtil {
         return rgbaBuffer;
     }
 
-    public byte[] yuv2BGRA(byte[] yData, byte[] uData, byte[] vData, int uvPixelStride, int width, int height, int orientation, boolean flipY) {
+    public byte[] yuv420_2_BGRA(byte[] yData, byte[] uData, byte[] vData, int uvPixelStride, int width, int height, int orientation, boolean flipY) {
         convert(yData, uData, vData, uvPixelStride, width, height, orientation, flipY, BGRA);
         if (null == bgraBuffer) {
             bgraBuffer = new byte[width * height * 4];
