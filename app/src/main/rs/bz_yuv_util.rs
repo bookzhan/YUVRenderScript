@@ -23,6 +23,8 @@ rs_allocation mInput;
 rs_allocation mInY;
 rs_allocation mInU;
 rs_allocation mInV;
+rs_allocation mInNV21;
+rs_allocation mInYV12;
 int inWidth=0,inHeight=0;
 int orientation=0;
 bool flipY=false;
@@ -182,6 +184,62 @@ uchar4 __attribute__((kernel)) yuv_420_888_2_bgra(uint32_t x, uint32_t y) {
     uchar v= rsGetElementAt_uchar(mInV,uvIndex);
 
     uchar4 rgba= yuvToRGBA4(yps, u, v);
+    return (uchar4){rgba.z, rgba.y, rgba.x,rgba.w};
+}
+
+uchar4 __attribute__((kernel)) yuv_nv_21_2_rgba(uint32_t x, uint32_t y) {
+    if(inWidth<=0||inHeight<=0){
+        rsDebug("bz_inWidth<=0||inHeight<=0", inWidth,inHeight);
+        return '0';
+    }
+    int targetX=x;
+    int targetY=y;
+    setLocation(x,y,&targetX,&targetY);
+    uint yIndex=targetX*targetY;
+    uint uIndex=inWidth*inHeight+ (targetX/2) *(targetY/2);
+    uint vIndex=inWidth*inHeight+ (targetX/2) *(targetY/2)+1;
+    uchar yps= rsGetElementAt_uchar(mInNV21,yIndex);
+    uchar u= rsGetElementAt_uchar(mInNV21,uIndex);
+    uchar v= rsGetElementAt_uchar(mInNV21,vIndex);
+
+    return yuvToRGBA4(yps, u, v);
+}
+
+
+uchar4 __attribute__((kernel)) yuv_yv12_2_rgba(uint32_t x, uint32_t y) {
+    if(inWidth<=0||inHeight<=0){
+        rsDebug("bz_inWidth<=0||inHeight<=0", inWidth,inHeight);
+        return '0';
+    }
+    int targetX=x;
+    int targetY=y;
+    setLocation(x,y,&targetX,&targetY);
+    uint yIndex=targetX+inWidth*targetY;
+    uint uIndex=inWidth*inHeight+ (targetX/2) + inWidth/2*(targetY/2);
+    uint vIndex=inWidth*inHeight+inWidth*inHeight/4+ (targetX/2) + inWidth/2*(targetY/2);
+    uchar yps= rsGetElementAt_uchar(mInNV21,yIndex);
+    uchar u= rsGetElementAt_uchar(mInNV21,uIndex);
+    uchar v= rsGetElementAt_uchar(mInNV21,vIndex);
+
+    return yuvToRGBA4(yps, v, u);
+}
+
+uchar4 __attribute__((kernel)) yuv_yv12_2_bgra(uint32_t x, uint32_t y) {
+    if(inWidth<=0||inHeight<=0){
+        rsDebug("bz_inWidth<=0||inHeight<=0", inWidth,inHeight);
+        return '0';
+    }
+    int targetX=x;
+    int targetY=y;
+    setLocation(x,y,&targetX,&targetY);
+    uint yIndex=targetX+inWidth*targetY;
+    uint uIndex=inWidth*inHeight+ (targetX/2) + inWidth/2*(targetY/2);
+    uint vIndex=inWidth*inHeight+inWidth*inHeight/4+ (targetX/2) + inWidth/2*(targetY/2);
+    uchar yps= rsGetElementAt_uchar(mInNV21,yIndex);
+    uchar u= rsGetElementAt_uchar(mInNV21,uIndex);
+    uchar v= rsGetElementAt_uchar(mInNV21,vIndex);
+
+    uchar4 rgba= yuvToRGBA4(yps, v, u);
     return (uchar4){rgba.z, rgba.y, rgba.x,rgba.w};
 }
 

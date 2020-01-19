@@ -10,19 +10,18 @@ import android.widget.ImageView;
 
 import com.luoye.bzcamera.BZCameraView;
 import com.luoye.bzcamera.listener.CameraStateListener;
-import com.luoye.yuvrenderscript.R;
 
 public class CameraActivity extends AppCompatActivity {
 
     private ImageView image_view;
     private BZCameraView bz_camera_view;
-    private FastYV12toRGB fastYV12toRGB;
+    private YUVConvertUtil yuvConvertUtil;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
-        fastYV12toRGB = new FastYV12toRGB(getApplicationContext());
+        yuvConvertUtil = new YUVConvertUtil(getApplicationContext());
 
         image_view = findViewById(R.id.image_view);
         bz_camera_view = findViewById(R.id.bz_camera_view);
@@ -41,7 +40,7 @@ public class CameraActivity extends AppCompatActivity {
 
             @Override
             public void onPreviewDataUpdate(byte[] data, int width, int height, int displayOrientation, int cameraId) {
-                final Bitmap bitmap = fastYV12toRGB.convertYV12toBitmap(data, width, height, displayOrientation);
+                final Bitmap bitmap = yuvConvertUtil.yuv_yv12_2_rgba(data, width, height, displayOrientation, true);
                 image_view.post(new Runnable() {
                     @Override
                     public void run() {
