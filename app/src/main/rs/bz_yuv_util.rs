@@ -147,7 +147,7 @@ uchar4 __attribute__((kernel)) yuv_420_888_2_rgba(uint32_t x, uint32_t y) {
     int targetX=x;
     int targetY=y;
     setLocation(x,y,&targetX,&targetY);
-    uint uvIndex=  uvPixelStride * (targetX/2) + inWidth*(targetY/2);
+    uint uvIndex= uvPixelStride*(targetX/2)+ uvPixelStride*(inWidth/2)*(targetY/2);
     uchar yps= rsGetElementAt_uchar(mInY,targetX,targetY);
     uchar u= rsGetElementAt_uchar(mInU,uvIndex);
     uchar v= rsGetElementAt_uchar(mInV,uvIndex);
@@ -162,7 +162,7 @@ uchar4 __attribute__((kernel)) yuv_420_888_2_bgra(uint32_t x, uint32_t y) {
     int targetX=x;
     int targetY=y;
     setLocation(x,y,&targetX,&targetY);
-    uint uvIndex=  uvPixelStride * (targetX/2) + inWidth*(targetY/2);
+    uint uvIndex= uvPixelStride*(targetX/2)+ uvPixelStride*(inWidth/2)*(targetY/2);
     uchar yps= rsGetElementAt_uchar(mInY,targetX,targetY);
     uchar u= rsGetElementAt_uchar(mInU,uvIndex);
     uchar v= rsGetElementAt_uchar(mInV,uvIndex);

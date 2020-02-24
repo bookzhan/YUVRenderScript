@@ -1,16 +1,34 @@
+/*
+ *              Copyright (c) 2016-2019, Nuralogix Corp.
+ *                      All Rights reserved
+ *
+ *      THIS SOFTWARE IS LICENSED BY AND IS THE CONFIDENTIAL AND
+ *      PROPRIETARY PROPERTY OF NURALOGIX CORP. IT IS
+ *      PROTECTED UNDER THE COPYRIGHT LAWS OF THE USA, CANADA
+ *      AND OTHER FOREIGN COUNTRIES. THIS SOFTWARE OR ANY
+ *      PART THEREOF, SHALL NOT, WITHOUT THE PRIOR WRITTEN CONSENT
+ *      OF NURALOGIX CORP, BE USED, COPIED, DISCLOSED,
+ *      DECOMPILED, DISASSEMBLED, MODIFIED OR OTHERWISE TRANSFERRED
+ *      EXCEPT IN ACCORDANCE WITH THE TERMS AND CONDITIONS OF A
+ *      NURALOGIX CORP SOFTWARE LICENSE AGREEMENT.
+ */
 package com.luoye.yuvrenderscript;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.media.Image;
+import android.os.Build;
 import android.renderscript.Allocation;
 import android.renderscript.Element;
 import android.renderscript.RenderScript;
 import android.renderscript.Type;
 
+import androidx.annotation.RequiresApi;
+
 import com.luoye.bzyuv.ScriptC_bz_yuv_util;
 
+
 /**
- * Created by zhandalin on 2020-01-15 14:00.
  * description: Element.RGB_888 and Element.RGBA_8888 allocate the same memory, 4 bytes aligned?
  * So theoretically does not support conversion to RGB
  */
@@ -29,6 +47,9 @@ public class YUVConvertUtil {
     private Allocation finalOut;
     private Bitmap bitmap;
     private byte[] outBuffer;
+    private byte[] yBuffer = null;
+    private byte[] uBuffer = null;
+    private byte[] vBuffer = null;
 
     public YUVConvertUtil(Context context) {
         renderScript = RenderScript.create(context);
@@ -128,6 +149,55 @@ public class YUVConvertUtil {
             finalOut.copyTo(bitmap);
         }
         return bitmap;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+    public byte[] processImage2RGBA(Image image, int orientation, boolean flipY) {
+        if (null == image) {
+            return null;
+        }
+        Image.Plane[] planes = image.getPlanes();
+        if (null == planes || planes.length < 3) {
+            return null;
+        }
+        if (null == yBuffer) {
+            yBuffer = new byte[image.getWidth() * image.getHeight()];
+        }
+        if (null == uBuffer) {
+            uBuffer = new byte[planes[1].getBuffer().capacity()];
+        }
+        if (null == vBuffer) {
+            vBuffer = new byte[planes[2].getBuffer().capacity()];
+        }
+        planes[0].getBuffer().get(yBuffer);
+        planes[1].getBuffer().get(vBuffer);
+        planes[2].getBuffer().get(uBuffer);
+        return yuv420_2_RGBA(yBuffer, uBuffer, vBuffer, planes[1].getPixelStride(), image.getWidth(), image.getHeight(), orientation, flipY);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+    public byte[] processImage2BGRA(Image image, int orientation, boolean flipY) {
+        if (null == image) {
+            return null;
+        }
+        Image.Plane[] planes = image.getPlanes();
+        if (null == planes || planes.length < 3) {
+            return null;
+        }
+        if (null == yBuffer) {
+            yBuffer = new byte[image.getWidth() * image.getHeight()];
+        }
+        if (null == uBuffer) {
+            uBuffer = new byte[planes[1].getBuffer().capacity()];
+        }
+        if (null == vBuffer) {
+            vBuffer = new byte[planes[2].getBuffer().capacity()];
+        }
+        planes[0].getBuffer().get(yBuffer);
+        planes[1].getBuffer().get(vBuffer);
+        planes[2].getBuffer().get(uBuffer);
+        return yuv420_2_BGRA(yBuffer, uBuffer, vBuffer, planes[1].getPixelStride(), image.getWidth(), image.getHeight(), orientation, flipY);
+
     }
 
     public byte[] yuv420_2_RGBA(byte[] yData, byte[] uData, byte[] vData, int uvPixelStride, int width, int height, int orientation, boolean flipY) {
@@ -251,5 +321,40 @@ public class YUVConvertUtil {
         } else {
             scriptC_yuv.forEach_yuv_420_888_2_rgba(finalOut);
         }
+    }
+
+    public void close() {
+        if (null != yIn) {
+            yIn.destroy();
+            yIn = null;
+        }
+        if (null != uIn) {
+            uIn.destroy();
+            uIn = null;
+        }
+        if (null != vIn) {
+            vIn.destroy();
+            vIn = null;
+        }
+        if (null != yv12In) {
+            yv12In.destroy();
+            yv12In = null;
+        }
+        if (null != nv21In) {
+            nv21In.destroy();
+            nv21In = null;
+        }
+        if (null != finalOut) {
+            finalOut.destroy();
+            finalOut = null;
+        }
+        if (null != bitmap && !bitmap.isRecycled()) {
+            bitmap.recycle();
+            bitmap = null;
+        }
+        outBuffer = null;
+        yBuffer = null;
+        uBuffer = null;
+        vBuffer = null;
     }
 }
