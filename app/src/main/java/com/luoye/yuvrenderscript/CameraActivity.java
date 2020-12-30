@@ -9,7 +9,7 @@ import android.os.Bundle;
 import android.widget.ImageView;
 
 import com.luoye.bzcamera.BZCameraView;
-import com.luoye.bzcamera.listener.CameraStateListener;
+import com.luoye.bzcamera.listener.OnCameraStateListener;
 
 public class CameraActivity extends AppCompatActivity {
 
@@ -28,7 +28,7 @@ public class CameraActivity extends AppCompatActivity {
         bz_camera_view.setNeedCallBackData(true);
         bz_camera_view.setPreviewTargetSize(480, 640);
         bz_camera_view.setPreviewFormat(ImageFormat.NV21);
-        bz_camera_view.setCameraStateListener(new CameraStateListener() {
+        bz_camera_view.setOnCameraStateListener(new OnCameraStateListener() {
             @Override
             public void onPreviewSuccess(Camera camera, int width, int height) {
             }
