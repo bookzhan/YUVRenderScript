@@ -24,4 +24,4 @@ Give me a star if you like，Thanks！
 
 
 
-中文文档地址（Chinese document address）：https://blog.raoyunsoft.com/index.php/2020/01/19/yuvrenderscript/
+中文文档地址（Chinese document address）：[https://blog.raoyunsoft.com/index.php/2020/01/19/yuvrenderscript/](https://blog.raoyunsoft.com/post/yuv-conversion-renderscript-nv21-yv12-yuv420)
